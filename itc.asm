@@ -27,16 +27,16 @@ global _start
 %macro colon 2
   section .data
 	w_ %+ %2:
-	  ln_create
+	  create_link
 	  db %1, 0
 	xt_ %+ %2:
-	  dq docol             ; The `docol` address −− one level of indirection
+	  dq i_docol             ; The `docol` address −− one level of indirection
 %endmacro
 
-section .data
-  program_stub: dq 0
-  xt_interpreter: dq .interpreter
-  .interpreter: dq interpreter_loop
+;section .data
+;  program_stub: dq 0
+;  xt_interpreter: dq .interpreter
+;  .interpreter: dq interpreter_loop
 
 section .bss
   resq 1023
@@ -44,6 +44,8 @@ section .bss
   input_buf: resb 1024
 
 section .text
+
+
 ; DICTIONARY
 ; drop, +, dup, double
 
@@ -69,8 +71,41 @@ colon 'double', double
 
 last_word: dq w_double
 
+
+; EXECUTION
+
+; The program starts execution from the init word
+_start:
+  jmp i_init
+
+; Initializes registers
+xt_init:
+  dq i_init
+i_init:
+  mov rstack, rstack_start
+  mov pc, entry_point
+  jmp next
+
+; this one cell is the program
+entry_point:
+  dq xt_main
+
+; This is a colon word, it stores
+; execution tokens. Each token
+; corresponds to a Forth word to be
+; executed
+xt_main:
+  dq i_docol
+  dq xt_inbuf
+  dq xt_word
+  dq xt_drop
+  dq xt_inbuf
+  dq xt_prints
+  dq xt_bye
+
+
 ; UTILS
-; docol, exit, word, prints, bye, inbuf
+; docol, exit, word, prints, bye, inbuf, next
 
 ; Saves PC when the colon word starts
 xt_docol:
@@ -125,31 +160,6 @@ i_inbuf:
   push qword input_buf
   jmp next
 
-; this one cell is the program
-entry_point:
-  dq xt_main
-
-; Initializes registers
-xt_init:
-  dq i_init
-i_init:
-  mov rstack, rstack_start
-  mov pc, entry_point
-  jmp next
-
-; This is a colon word, it stores
-; execution tokens. Each token
-; corresponds to a Forth word to be
-; executed
-xt_main:
-  dq i_docol
-  dq xt_inbuf
-  dq xt_word
-  dq xt_drop
-  dq xt_inbuf
-  dq xt_prints
-  dq xt_bye
-
 ; The inner interpreter. These three lines
 ; fetch the next instruction and start its
 ; execution
@@ -157,7 +167,3 @@ next:
   mov w, [pc]
   add pc, 8
   jmp [w]
-
-; The program starts execution from the init word
-_start:
-  jmp i_init
