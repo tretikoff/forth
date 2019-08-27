@@ -1,12 +1,19 @@
 section .data
-  program_stub: dq 0
-  xt_interpreter: dq interpreter_loop
   xt_run: dq run
-  warning_message: db "Warning: we do not have such word", 0
+  xt_loop: dq main_loop
+  program_stub: dq 0
+  warning_message: db "Warning: no such word", 0
+  mode: db 0               ; 0 - interpreter ; 1 - compiler
+  was_branch: db 0
+
 
 section .bss
+
+  ; return stack - END   ;
   resq 1023
   rstack_start: resq 1
+  ; return stack - START ;
+  forth_mem: resq 65536
   input_buf: resb 1024
 
 section .text
@@ -55,5 +62,3 @@ next:
   mov w, [pc]
   add pc, 8
   jmp [w]
-
-  

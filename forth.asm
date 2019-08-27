@@ -14,29 +14,73 @@ _start:
 
 run:
   dq docol_impl
-interpreter_loop:
-  dq xt_buffer
-  dq xt_read                ; read the word
-  branchif0 .exit           ; word read error or empty string
 
-  dq xt_buffer
-  dq xt_find
-  dq xt_dup
-  branchif0 .number
+  main_loop:
+    dq xt_buffer
+    dq xt_read                ; read the word
+    branchif0 exit           ; word read error or empty string
+    dq xt_buffer
+    dq xt_find
 
-  dq xt_cfa                 ; rax - execution address
-  dq xt_initcmd
-  branch interpreter_loop
+    dq xt_pushmode
+    branchif0 .interpreter_mode
 
-  .number:
+  .compiler_mode:
+    dq xt_dup                 ; copy address
+    branchif0 .compiler_number
+
+    dq xt_cfa                 ; xt_address
+
+    ; Check command's flag. Immediate commands must be interpreted.
+    dq xt_isimmediate
+    branchif0 .notImmediate
+
+    .immediate:
+      dq xt_initcmd
+      branch main_loop
+
+    .notImmediate:
+      dq xt_setbranch
+      dq xt_save
+      branch main_loop
+
+    .compiler_number:
+      dq xt_drop
+      dq xt_parsei
+      branchif0 .warning
+      dq xt_wasbranch
+      branchif0 .lit
+
+      dq xt_unsetbranch
+      dq xt_savenum
+      branch main_loop
+
+  	  .lit:
+  		dq xt_pushlit
+      dq xt_save
+  		dq xt_savenum
+
+      branch main_loop
+
+
+  .interpreter_mode:
+    dq xt_dup
+    branchif0 .interpreter_number
+
+    dq xt_cfa                 ; rax - execution address
+    dq xt_initcmd
+    branch main_loop
+
+    .interpreter_number:
+      dq xt_drop
+      dq xt_parsei
+      branchif0 .warning
+      branch main_loop
+
+  .warning:
     dq xt_drop
-    dq xt_parsei
-    branchif0 warning
-    branch interpreter_loop
+  	dq xt_warn
+    branch main_loop
 
-  .exit:
-    dq xt_bye
-
-warning:
-  dq xt_drop
-	dq xt_warn
+exit:
+  dq xt_bye

@@ -62,6 +62,62 @@ native 'cfa', cfa
   push rax
   jmp next
 
+; ( xt_addr -- xt_addr answer )
+native 'isimmediate', isimmediate
+  pop rax
+  push rax
+  xor rdx, rdx
+  mov dl, byte[rax - 1]
+  push rdx
+  jmp next
+
+; ( xt_addr -- xt_addr )
+native 'setbranch', setbranch
+  pop rax
+  push rax
+  cmp byte[rax - 1], 2
+  jne .continue
+  mov byte[was_branch], 1
+  .continue:
+  jmp next
+
+native 'pushlit', pushlit
+  push xt_lit
+  jmp next
+
+; (  --  )
+native 'unsetbranch', unsetbranch
+  mov byte[was_branch], 0
+  jmp next
+
+; ( xt_addr --  )
+native 'save', save
+  pop rax
+  mov  qword[here], rax
+  add  here, word_size
+  jmp next
+
+; ( xt_addr --  )
+native 'savenum', savenum
+  pop rax
+  mov  [here], rax
+  add  here, word_size
+  jmp next
+
+
+; (  -- answer )
+native 'wasbranch', wasbranch
+  xor rdx, rdx
+  mov dl, byte[was_branch]
+  push rdx
+  jmp next
+
+; Pushes a value immediately following this XT
+native "lit", lit
+    push qword [pc]
+    add pc, 8
+    jmp next
+
 
 ; COMPILE-ONLY WORDS
 
@@ -123,7 +179,7 @@ native 'warn', warn
   mov  rdi, warning_message
   call print_string
   call print_newline
-  mov  pc, xt_interpreter
+  mov  pc, xt_loop
   jmp next
 
 ; Initializes registers
@@ -133,6 +189,9 @@ native 'init', init
   mov pc, xt_run    ; entry_point - other way to work with
   jmp next
 
+native 'pushmode', pushmode
+  push mode
+  jmp next
 
 ; GENERAL WORDS
 
