@@ -21,12 +21,14 @@ interpreter_loop:
 
   dq xt_buffer
   dq xt_find
+  dq xt_dup
   branchif0 .number
 
   dq xt_cfa                 ; rax - execution address
   dq xt_ps
 
   .number:
+    dq xt_drop
     dq xt_parsei
     branchif0 warning
     branch interpreter_loop

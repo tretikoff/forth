@@ -16,5 +16,11 @@ rebuild: clean forth
 debug: forth
 	gdb forth -f .gdbinit
 
+run: forth
+	./forth
+
 # build and debug
-bd: rebuild debug
+bd: clean debug
+
+# build and run
+br: clean run
