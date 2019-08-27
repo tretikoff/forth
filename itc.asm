@@ -96,12 +96,29 @@ interpreter_loop:
   dq xt_word                ; read the word
   push rdx
   test rdx, rdx
-  jz .exit
+  jz .exit                  ; word read error or empty string
+
   dq xt_inbuf
   call find_word
+  test rax, rax
+  jz .number
+
+  push rax
+  call cfa                  ; rax - execution address
+  mov [program_stub], rax
+  mov pc, program_stub
+  jmp next
+
+  .number:
+    call parse_int          ; rax - number ; rdx - length of number
+    test rdx, rdx
+    jz warning
+    push rax                ; save number to stack
+    jmp interpreter_loop
 
   .exit:
     dq xt_bye
+
 
 ; this one cell is the program
 entry_point:
@@ -177,13 +194,27 @@ find_word:
     test rsi, rsi           ; is it the last one?
     jnz .loop
 
-    xor eax, eax 
+    xor eax, eax
     ret
 
   .found:
     mov rax, rsi
     ret
 
+; code from address - jump pointer to execution_point place
+; rdi - command address
+; rax - address of xt_COMMAND
+cfa:
+	xor eax, eax
+  pop rdi
+	add rdi, link_size
+  push rdi
+  call string_length        ; rax - length of string
+  pop rdi
+  add rax, 1                ; rax - length with null-terminator
+  add rdi, rax
+	mov rax, rdi
+  ret
 
 ; Takes a pointer to a string from the stack
 ; and prints it
