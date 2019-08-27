@@ -113,7 +113,7 @@ native 'wasbranch', wasbranch
   jmp next
 
 ; Pushes a value immediately following this XT
-native "lit", lit
+native 'lit', lit
     push qword [pc]
     add pc, 8
     jmp next
@@ -135,7 +135,7 @@ native 'branchifz', branchifz
 
 ; (  --  )
 ; Jump to a location
-native "branch", branch
+native 'branch', branch
     mov pc, [pc]
     jmp next
 
@@ -220,7 +220,7 @@ native 'dup', dup
   jmp next
 
 ; ( b a -- [a < b] )
-native "<", less
+native '<', less
   pop rdx
   pop rax
   cmp rax, rdx
@@ -231,7 +231,7 @@ native "<", less
 
 ; ( a b -- b a )
 ; Swap two cells on top of the stack
-native "swap", swap
+native 'swap', swap
     pop rax
     pop rdx
     push rax
@@ -239,21 +239,21 @@ native "swap", swap
     jmp next
 
 ; Shows all stack contents. Does not pop elements
-native ".S", show_stack
+native '.S', show_stack
   mov rcx, rsp
   .loop:
     cmp rcx, [stack_start]
     jae next
     mov rdi, [rcx]
     push rcx
-    call printi
-    call printnl
+    call print_int
+    call print_newline
     pop rcx
     add rcx, 8
     jmp .loop
 
 ; ( b a -- [ b + a ] )
-native "+", plus
+native '+', plus
   pop rdx
   pop rax
   add rax, rdx
@@ -261,7 +261,7 @@ native "+", plus
   jmp next
 
 ; ( b a -- [ b - a ] )
-native "-", minus
+native '-', minus
   pop rdx
   pop rax
   sub rax, rdx
@@ -269,7 +269,7 @@ native "-", minus
   jmp next
 
 ; ( b a -- [ b * a ] )
-native "*", mul
+native '*', mul
   pop rdx
   pop rax
   imul rdx
@@ -277,7 +277,7 @@ native "*", mul
   jmp next
 
 ; ( y x -- [ x / y ] )
-native "/", div
+native '/', div
   pop rax
   pop rcx
   cqo
@@ -286,7 +286,7 @@ native "/", div
   jmp next
 
 ; ( b a -- [ b = a ] )
-native "=", equals
+native '=', equals
   pop rdx
   pop rax
   cmp rax, rdx
@@ -298,6 +298,83 @@ native "=", equals
 .nequals:
   xor rax, rax
   jmp next
+
+; ( b a -- b & a )
+; bitwise and
+native 'and', and
+  pop rdx
+  pop rax
+  and rax, rdx
+  push rax
+  jmp next
+
+; ( a -- !a )
+native 'not', not
+  pop rax
+  test rax, rax
+  jz .setone
+  xor rax, rax
+  push rax
+  jmp next
+  .setone:
+    xor rax, rax
+    mov rax, 1
+    push rax
+    jmp next
+
+; ( a b c -- b c a )
+native 'rot', rot
+  pop rax
+  pop rdx
+  pop rcx
+  push rdx
+  push rcx
+  push rax
+  jmp next
+
+; Drops element from stack and sends it to stdout
+; ( a -- )
+native '.', dot
+  pop rdi
+  call print_int
+  jmp next
+
+; ( -- c )
+; Read a single character
+native 'key', key
+  call read_char
+  push rax
+  jmp next
+
+; ( c -- )
+; Outputs a single character to stdout
+native 'emit', emit
+  pop rdi
+  call print_char
+  jmp next
+
+; ( val addr -- )
+; Store value by address
+native '!', write
+  pop rax
+  pop rdx
+  mov [rax], rdx
+  jmp next
+
+; ( addr -- value )
+; Fetch value from memory
+native '@', fetch
+  pop rax
+  push qword[rax]
+  jmp next
+
+; bitwise or
+; ( y x -- y | x )
+native "or", or
+  pop rax
+  or [rsp], rax
+  jmp next
+
 
 ; ( a -- [ a + a ] )
 colon 'double', double
