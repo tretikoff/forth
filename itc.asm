@@ -23,24 +23,23 @@ global _start
       dq %2 %+ _impl     ; COMMAND_impl address
 
   section .text
-	%2 %+ _impl:           ; COMMAND_impl label
+	 %2 %+ _impl:           ; COMMAND_impl label
 %endmacro
 
 %macro colon 2
   section .data
-	w_ %+ %2:
+	 w_ %+ %2:
 	  create_link
 	  db %1, 0
 
   section .text
-	xt_ %+ %2:
+	 xt_ %+ %2:
 	  dq i_docol             ; The `docol` address −− one level of indirection
 %endmacro
 
 section .data
   program_stub: dq 0
-  xt_interpreter: dq .interpreter
-  .interpreter: dq interpreter_loop
+  xt_interpreter: dq interpreter_loop
   last_word: dq link
   warning_message: db "Warning: we do not have such word", 0
 
@@ -86,7 +85,7 @@ i_init:
   mov rstack, rstack_start
 
   ; interpreter mode
-  mov pc, entry_point;xt_interpreter    ; entry_point - other way to work with
+  mov pc, xt_interpreter    ; entry_point - other way to work with
   jmp next
 
 interpreter_loop:
@@ -94,7 +93,7 @@ interpreter_loop:
 
   dq xt_inbuf
   dq xt_word                ; read the word
-  push rdx
+  push rdx                  ; rdx - count of symbols
   test rdx, rdx
   jz .exit                  ; word read error or empty string
 

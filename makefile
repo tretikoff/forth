@@ -9,4 +9,4 @@ itc.o: itc.asm
 clean:
 	rm -f itc *.o
 
-# debugging: gdb itc -tui
+# debugging: gdb itc -f .gdbinit
