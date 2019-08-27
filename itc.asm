@@ -1,4 +1,4 @@
-%include "io_lib.inc"
+%include 'io_lib.inc'
 
 global _start
 
@@ -30,24 +30,47 @@ global _start
 	  ln_create
 	  db %1, 0
 	xt_ %+ %2:
-	  dq docol
+	  dq docol             ; The `docol` address −− one level of indirection
 %endmacro
 
+section .data
+  program_stub: dq 0
+  xt_interpreter: dq .interpreter
+  .interpreter: dq interpreter_loop
+
 section .bss
-resq 1023
-rstack_start: resq 1
-input_buf: resb 1024
+  resq 1023
+  rstack_start: resq 1
+  input_buf: resb 1024
 
 section .text
+; DICTIONARY
+; drop, +, dup, double
+
 ; Drops the topmost element from the stack
-dq 0                    ; There is no previous node
-db "drop", 0
-db 0                    ; Flags = 0
-xt_drop:
-  dq i_drop
-i_drop:
+native 'drop', drop
   add rsp, 8
   jmp next
+
+native '+', plus
+  pop rax
+  add rax, [rsp]
+  mov [rsp], rax
+  jmp next
+
+native 'dup', dup
+  push qword [rsp]
+  jmp next
+
+colon 'double', double
+  dq xt_dup                 ; The words consisting `dup` start here.
+  dq xt_plus
+  dq xt_exit
+
+last_word: dq w_double
+
+; UTILS
+; docol, exit, word, prints, bye, inbuf
 
 ; Saves PC when the colon word starts
 xt_docol:
@@ -103,7 +126,7 @@ i_inbuf:
   jmp next
 
 ; this one cell is the program
-main_stub:
+entry_point:
   dq xt_main
 
 ; Initializes registers
@@ -111,7 +134,7 @@ xt_init:
   dq i_init
 i_init:
   mov rstack, rstack_start
-  mov pc, main_stub
+  mov pc, entry_point
   jmp next
 
 ; This is a colon word, it stores
