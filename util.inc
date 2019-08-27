@@ -1,7 +1,7 @@
 section .data
   program_stub: dq 0
   xt_interpreter: dq interpreter_loop
-  last_word: dq link
+  xt_run: dq run
   warning_message: db "Warning: we do not have such word", 0
 
 section .bss
@@ -14,7 +14,6 @@ section .text
 ; rax <= address of found word or zero(0)
 find_word:
   xor eax, eax            ; rax - answer: true or false
-  pop rdi                 ; rdi - user's word
   mov rsi, [last_word]    ; rsi - pointer to the last word
 
   .loop:
@@ -22,8 +21,8 @@ find_word:
     push rsi                ; caller-saved
     add rsi, link_size      ; rsi - jump over the link to word
     call string_equals      ; rax - find succeed? true(1) : false(0)
-    pop rdi                 ; caller-saved
     pop rsi                 ; caller-saved
+    pop rdi                 ; caller-saved
 
     test rax, rax
     jnz .found              ; check to successful search
@@ -38,19 +37,15 @@ find_word:
     mov rax, rsi
     ret
 
-; code from address - jump pointer to execution_point place
-; rdi - command address
-; rax - address of xt_COMMAND
-cfa:
-	xor eax, eax
-  pop rdi
-	add rdi, link_size
+call_from_address:
+  xor eax, eax
+  add rdi, link_size
   push rdi
   call string_length        ; rax - length of string
   pop rdi
   add rax, 1                ; rax - length with null-terminator
   add rdi, rax
-	mov rax, rdi
+  mov rax, rdi
   ret
 
 ; The inner interpreter. These three lines

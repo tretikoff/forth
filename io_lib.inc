@@ -90,6 +90,7 @@ print_int:
 
 ; rdi - first string address
 ; rsi - second string address
+; rax <= true(1)/false(0)
 string_equals:
   call string_length					; rax - length
   mov rcx, rax	 							; rcx - length of the first
