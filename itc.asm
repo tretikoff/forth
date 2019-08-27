@@ -7,6 +7,8 @@ global _start
 %define rstack r13
 %define link 0
 
+%assign link_size 8
+
 %macro create_link 0
   %%link: dq link        ; %% creates new local (example: @1234.link)
   %define link %%link
@@ -33,10 +35,11 @@ global _start
 	  dq i_docol             ; The `docol` address −− one level of indirection
 %endmacro
 
-;section .data
-;  program_stub: dq 0
-;  xt_interpreter: dq .interpreter
-;  .interpreter: dq interpreter_loop
+section .data
+  program_stub: dq 0
+  xt_interpreter: dq .interpreter
+  .interpreter: dq interpreter_loop
+  last_word: dq link
 
 section .bss
   resq 1023
@@ -69,8 +72,6 @@ colon 'double', double
   dq xt_plus
   dq xt_exit
 
-last_word: dq w_double
-
 
 ; EXECUTION
 
@@ -83,8 +84,24 @@ xt_init:
   dq i_init
 i_init:
   mov rstack, rstack_start
-  mov pc, entry_point
+
+  ; interpreter mode
+  mov pc, xt_interpreter    ; entry_point - other way to work with
   jmp next
+
+interpreter_loop:
+  dq i_docol
+
+  dq xt_inbuf
+  dq xt_word                ; read the word
+  push rdx
+  test rdx, rdx
+  jz .exit
+  dq xt_inbuf
+  call find_word
+
+  .exit:
+    dq xt_bye
 
 ; this one cell is the program
 entry_point:
@@ -96,11 +113,14 @@ entry_point:
 ; executed
 xt_main:
   dq i_docol
+
   dq xt_inbuf
   dq xt_word
   dq xt_drop
+
   dq xt_inbuf
   dq xt_prints
+
   dq xt_bye
 
 
@@ -135,6 +155,35 @@ i_word:
   call read_word
   push rdx
   jmp next
+
+; Searches word in dictionary
+; rax <= address of found word or zero(0)
+find_word:
+  xor eax, eax            ; rax - answer: true or false
+  pop rdi                 ; rdi - user's word
+  mov rsi, [last_word]    ; rsi - pointer to the last word
+
+  .loop:
+    push rdi                ; caller-saved
+    push rsi                ; caller-saved
+    add rsi, link_size      ; rsi - jump over the link to word
+    call string_equals      ; rax - find succeed? true(1) : false(0)
+    pop rdi                 ; caller-saved
+    pop rsi                 ; caller-saved
+
+    test rax, rax
+    jnz .found              ; check to successful search
+    mov rsi, [rsi]          ; rsi - pointer to the next word
+    test rsi, rsi           ; is it the last one?
+    jnz .loop
+
+    xor eax, eax 
+    ret
+
+  .found:
+    mov rax, rsi
+    ret
+
 
 ; Takes a pointer to a string from the stack
 ; and prints it

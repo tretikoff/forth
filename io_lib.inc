@@ -117,7 +117,7 @@ read_char:
   ret
 
 ; rdi - address of word
-; r14 <= length of word
+; rdx <= length of word
 read_word:
   push r14										; callee-saved
   push r15										; callee-saved
@@ -171,6 +171,7 @@ read_word:
 
   .read_err:
 	  xor rax, rax
+		xor rdx, rdx
 	  pop r15
 	  pop r14
 	  ret
