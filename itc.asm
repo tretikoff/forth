@@ -40,6 +40,7 @@ section .data
   xt_interpreter: dq .interpreter
   .interpreter: dq interpreter_loop
   last_word: dq link
+  warning_message: db "Warning: we do not have such word", 0
 
 section .bss
   resq 1023
@@ -119,6 +120,12 @@ interpreter_loop:
   .exit:
     dq xt_bye
 
+warning:
+	mov  rdi, warning_message
+	call print_string
+	call print_newline
+	mov  pc, xt_interpreter
+	jmp next
 
 ; this one cell is the program
 entry_point:
