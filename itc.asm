@@ -5,6 +5,33 @@ global _start
 %define pc r15
 %define w r14
 %define rstack r13
+%define link 0
+
+%macro create_link 0
+  %%link: dq link        ; %% creates new local (example: @1234.link)
+  %define link %%link
+%endmacro
+
+%macro native 2
+  section .data
+    w_ %+ %2:            ; w_COMMAND label
+	    create_link        ; create link for dictionary search
+	    db %1, 0           ; put name of COMMAND with null-terminator
+	  xt_ %+ %2:           ; xt_COMMAND label
+      dq %2 %+ _impl     ; COMMAND_impl address
+
+  section .text
+	%2 %+ _impl:           ; COMMAND_impl label
+%endmacro
+
+%macro colon 2
+  section .data
+	w_ %+ %2:
+	  ln_create
+	  db %1, 0
+	xt_ %+ %2:
+	  dq docol
+%endmacro
 
 section .bss
 resq 1023
