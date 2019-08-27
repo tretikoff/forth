@@ -1,12 +1,12 @@
-all: itc
+all: forth
 
-itc: itc.o
-	ld -o itc itc.o
+forth: forth.o
+	ld -o forth forth.o
 
-itc.o: itc.asm
-	nasm -f elf64 -g -F dwarf itc.asm -o itc.o
+forth.o: forth.asm
+	nasm -f elf64 -g -F dwarf forth.asm -o forth.o
 
 clean:
-	rm -f itc *.o
+	rm -f forth *.o
 
-# debugging: gdb itc -f .gdbinit
+# debugging: gdb forth -f .gdbinit
