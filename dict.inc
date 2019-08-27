@@ -187,6 +187,12 @@ native 'init', init
   mov rstack, rstack_start
   ; interpreter mode
   mov pc, xt_run    ; entry_point - other way to work with
+  cmp qword[stack_start], 0
+  je  .init_stack
+  mov rsp, [stack_start]
+  jmp next
+  .init_stack:
+  mov [stack_start], rsp
   jmp next
 
 native 'pushmode', pushmode
@@ -213,8 +219,93 @@ native 'dup', dup
   push qword [rsp]
   jmp next
 
+; ( b a -- [a < b] )
+native "<", less
+  pop rdx
+  pop rax
+  cmp rax, rdx
+  setl al
+  movzx rax, al
+  push rax
+  jmp next
+
+; ( a b -- b a )
+; Swap two cells on top of the stack
+native "swap", swap
+    pop rax
+    pop rdx
+    push rax
+    push rdx
+    jmp next
+
+; Shows all stack contents. Does not pop elements
+native ".S", show_stack
+  mov rcx, rsp
+  .loop:
+    cmp rcx, [stack_start]
+    jae next
+    mov rdi, [rcx]
+    push rcx
+    call printi
+    call printnl
+    pop rcx
+    add rcx, 8
+    jmp .loop
+
+; ( b a -- [ b + a ] )
+native "+", plus
+  pop rdx
+  pop rax
+  add rax, rdx
+  push rax
+  jmp next
+
+; ( b a -- [ b - a ] )
+native "-", minus
+  pop rdx
+  pop rax
+  sub rax, rdx
+  push rax
+  jmp next
+
+; ( b a -- [ b * a ] )
+native "*", mul
+  pop rdx
+  pop rax
+  imul rdx
+  push rax
+  jmp next
+
+; ( y x -- [ x / y ] )
+native "/", div
+  pop rax
+  pop rcx
+  cqo
+  idiv rcx
+  push rax
+  jmp next
+
+; ( b a -- [ b = a ] )
+native "=", equals
+  pop rdx
+  pop rax
+  cmp rax, rdx
+  jne .nequals
+  xor rax, rax
+  mov rax, 1
+  push rax
+  jmp next
+.nequals:
+  xor rax, rax
+  jmp next
+
 ; ( a -- [ a + a ] )
 colon 'double', double
   dq xt_dup                 ; The words consisting `dup` start here.
   dq xt_plus
   dq xt_exit
+
+colon '>', greater
+  dq xt_swap
+  dq xt_less
+  dq exit

@@ -5,6 +5,8 @@ section .data
   warning_message: db "Warning: no such word", 0
   mode: db 0               ; 0 - interpreter ; 1 - compiler
   was_branch: db 0
+  mem: dq forth_mem
+  stack_start:
 
 
 section .bss
