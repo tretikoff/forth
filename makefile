@@ -8,3 +8,5 @@ itc.o: itc.asm
 
 clean:
 	rm -f itc *.o
+
+# debugging: gdb itc -tui
