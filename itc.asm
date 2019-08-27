@@ -31,6 +31,8 @@ global _start
 	w_ %+ %2:
 	  create_link
 	  db %1, 0
+
+  section .text
 	xt_ %+ %2:
 	  dq i_docol             ; The `docol` address −− one level of indirection
 %endmacro
@@ -46,9 +48,6 @@ section .bss
   resq 1023
   rstack_start: resq 1
   input_buf: resb 1024
-
-section .text
-
 
 ; DICTIONARY
 ; drop, +, dup, double
@@ -87,7 +86,7 @@ i_init:
   mov rstack, rstack_start
 
   ; interpreter mode
-  mov pc, xt_interpreter    ; entry_point - other way to work with
+  mov pc, entry_point;xt_interpreter    ; entry_point - other way to work with
   jmp next
 
 interpreter_loop:
@@ -105,7 +104,7 @@ interpreter_loop:
   jz .number
 
   push rax
-  call cfa                  ; rax - execution address
+  call cfa                 ; rax - execution address
   mov [program_stub], rax
   mov pc, program_stub
   jmp next
