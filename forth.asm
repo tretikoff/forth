@@ -25,7 +25,8 @@ interpreter_loop:
   branchif0 .number
 
   dq xt_cfa                 ; rax - execution address
-  dq xt_ps
+  dq xt_initcmd
+  branch interpreter_loop
 
   .number:
     dq xt_drop

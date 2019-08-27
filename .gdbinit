@@ -1,4 +1,4 @@
 layout split
 layout next
-b find_impl
+b initcmd_impl
 run

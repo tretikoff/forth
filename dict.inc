@@ -109,12 +109,15 @@ native 'buffer', buffer
   push qword input_buf
   jmp next
 
-; ( answer --  )
-native 'ps', ps
+; ( xt_addr --  )
+native 'initcmd', initcmd
   pop rax
+  push pc
   mov [program_stub], rax
   mov pc, program_stub
-  jmp next
+  mov w, [pc]
+  pop pc
+  jmp [w]
 
 native 'warn', warn
   mov  rdi, warning_message
