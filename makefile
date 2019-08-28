@@ -10,7 +10,6 @@ clean:
 	rm -f forth *.o
 
 # debugging: gdb forth -f .gdbinit
-=======
 rebuild: clean forth
 
 debug: forth
@@ -18,6 +17,27 @@ debug: forth
 
 run: forth
 	./forth
+
+test1: clean forth
+	./forth <tests/test01.frt
+
+test2: clean forth
+	./forth <tests/test02.frt
+
+test3: clean forth
+	./forth <tests/test03.frt
+
+test4: clean forth
+	./forth <tests/test04.frt
+
+test5: clean forth
+	./forth <tests/test05.frt
+
+test6: clean forth
+	./forth <tests/test06.frt
+
+test7: clean forth
+	./forth <tests/test07.frt
 
 # build and debug
 bd: clean debug

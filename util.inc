@@ -3,20 +3,22 @@ section .data
   xt_loop: dq main_loop
   program_stub: dq 0
   warning_message: db "Warning: no such word", 0
-  mode: db 0               ; 0 - interpreter ; 1 - compiler
+  imode_message: db "Interpreter mode", 0
+  cmode_message: db "Compiler mode", 0
+  mode: dq 0               ; 0 - interpreter ; 1 - compiler
   was_branch: db 0
   mem: dq forth_mem
-  stack_start:
+  stack_start: dq 0
 
 
 section .bss
-
   ; return stack - END   ;
   resq 1023
   rstack_start: resq 1
   ; return stack - START ;
   forth_mem: resq 65536
   input_buf: resb 1024
+  user_buf: resb 1024
 
 section .text
 ; Searches word in dictionary
@@ -53,6 +55,7 @@ call_from_address:
   call string_length        ; rax - length of string
   pop rdi
   add rax, 1                ; rax - length with null-terminator
+  add rax, 1                ; rax - with immediate flag
   add rdi, rax
   mov rax, rdi
   ret

@@ -1,7 +1,8 @@
 %define pc r15
 %define w r14
 %define rstack r13
-%define here r12          ; pointer to free block of forth memory
+%define stack r12
+%define here r11         ; pointer to free block of forth memory
 %define link 0
 
 %assign link_size 8
@@ -30,9 +31,8 @@
 	  create_link
 	  db %1, 0
     db %3                ; Immediate flag
-  section .text
 	 xt_ %+ %2:
-	  dq xt_docol             ; The `docol` address −− one level of indirection
+	  dq docol_impl             ; The `docol` address −− one level of indirection
 %endmacro
 
 %macro native 2

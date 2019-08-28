@@ -1,53 +1,208 @@
-; IO_LIB WORDS
-
-; ( addr --  )
-; print string
-native 'prints', prints
-  pop rdi
-  call print_string
+; (  -- buf )
+; loads the predefined buffer address
+native 'buf', buf
+  push qword user_buf
   jmp next
 
-; print new line
-native 'printnl', printnl
-  call print_newline
-  jmp next
-
-; ( num --  )
-; print integer number
-native 'printi', printi
-  pop rdi
-  call print_int
-  jmp next
-
-; ( arg2_addr arg1_addr -- answer )
-; check strings to equality
-native 'equals', equals
-  pop rdi
-  pop rsi
-  call string_equals
-  push rax
-  jmp next
-
-; ( buf_addr -- len )
-; read word to buffer
+; ( buf -- len )
+; reads word to buffer
 native 'read', read
   pop rdi
   call read_word
   push rdx
   jmp next
 
-; (  -- num len )
-native 'parsei', parsei
-  call parse_int          ; rax - number ; rdx - length of number
-  push rax                ; save number to stack
-  push rdx
+; ( a --  )
+; drops the topmost element from the stack
+native 'drop', drop
+  add rsp, 8
   jmp next
 
+; ( addr --  )
+; prints string
+native 'prints', prints
+  pop rdi
+  call print_string
+  jmp next
 
-; UTIL WORDS
+; prints new line
+native 'printnl', printnl
+  call print_newline
+  jmp next
+
+; ( a --  )
+; prints integer number
+native '.', dot
+  pop rdi
+  call print_int
+  jmp next
+
+; ( arg2 arg1 -- answer )
+; check strings to equality
+native 'compare', compare
+  pop rdi
+  pop rsi
+  call string_equals
+  push rax
+  jmp next
+
+; ( a -- a a )
+native 'dup', dup
+  push qword [rsp]
+  jmp next
+
+; ( b a -- [ b + a ] )
+native '+', plus
+  pop rdx
+  pop rax
+  add rax, rdx
+  push rax
+  jmp next
+
+; ( b a -- [ b - a ] )
+native '-', minus
+  pop rdx
+  pop rax
+  sub rax, rdx
+  push rax
+  jmp next
+
+; ( b a -- [ b * a ] )
+native '*', mul
+  pop rdx
+  pop rax
+  imul rdx
+  push rax
+  jmp next
+
+; ( b a -- [ b / a ] )
+native '/', div
+  pop rcx
+  pop rax
+  cqo
+  idiv rcx
+  push rax
+  jmp next
+
+; ( b a -- [a < b] )
+native '<', less
+  pop rdx
+  pop rax
+  cmp rax, rdx
+  setl al
+  movzx rax, al
+  push rax
+  jmp next
+
+; ( a b -- b a )
+; swap two cells on top of the stack
+native 'swap', swap
+  pop rdx
+  pop rax
+  push rdx
+  push rax
+  jmp next
+
+; print all stack elements
+native '.S', show_stack
+  mov rcx, rsp
+  .loop:
+    cmp rcx, [stack_start]
+    jae next
+    mov rdi, [rcx]
+    push rcx
+    call print_int
+    call print_newline
+    pop rcx
+    add rcx, 8
+    jmp .loop
+
+; ( b a -- [ b = a ] )
+native '=', equals
+  pop rdx
+  pop rax
+  cmp rax, rdx
+  jne .nequals
+  xor rax, rax
+  mov rax, 1
+  push rax
+  jmp next
+  .nequals:
+    xor rax, rax
+    push rax
+    jmp next
+
+; ( b a -- [ b & a ] )
+; bitwise and
+native '&', and
+  pop rdx
+  pop rax
+  and rax, rdx
+  push rax
+  jmp next
+
+; ( b a -- [ b | a ] )
+; bitwise or
+native '|', or
+  pop rax
+  or [rsp], rax
+  jmp next
+
+; ( a -- !a )
+native 'not', not
+  pop rax
+  test rax, rax
+  jz .setone
+  xor rax, rax
+  push rax
+  jmp next
+  .setone:
+    xor rax, rax
+    mov rax, 1
+    push rax
+    jmp next
+
+; ( c b a -- b a c )
+native 'rot', rot
+  pop rax
+  pop rdx
+  pop rcx
+  push rdx
+  push rax
+  push rcx
+  jmp next
+
+; ( -- c )
+; read a single character from stdin
+native 'key', key
+  call read_char
+  push rax
+  jmp next
+
+; ( c -- )
+; output a single character to stdout
+native 'emit', emit
+  pop rdi
+  call print_char
+  jmp next
+
+; ( val addr -- )
+; store value by address
+native '!', write
+  pop rax
+  pop rdx
+  mov [rax], rdx
+  jmp next
+
+; ( addr -- value )
+; fetch value from address
+native '@', fetch
+  pop rax
+  push qword[rax]
+  jmp next
 
 ; ( user_word_addr -- dict_word_addr )
-; Find word in dictionary
+; find word in dictionary
 native 'find', find
   pop rdi                ; rdi - user's word
   call find_word
@@ -62,6 +217,24 @@ native 'cfa', cfa
   push rax
   jmp next
 
+; ( xt_addr --  )
+native 'initcmd', initcmd
+  pop rax
+  mov w, rax
+  jmp [w]
+
+; terminate the program
+native 'bye', bye
+  mov rax, 60
+  xor rdi, rdi
+  syscall
+
+native 'warn', warn
+  mov  rdi, warning_message
+  call print_string
+  call print_newline
+  jmp next
+
 ; ( xt_addr -- xt_addr answer )
 native 'isimmediate', isimmediate
   pop rax
@@ -69,6 +242,28 @@ native 'isimmediate', isimmediate
   xor rdx, rdx
   mov dl, byte[rax - 1]
   push rdx
+  jmp next
+
+; ( addr -- num len )
+native 'parsei', parsei
+  pop rdi
+  call parse_int          ; rax - number ; rdx - length of number
+  push rax                ; save number to stack
+  push rdx
+  jmp next
+
+native 'pushmode', pushmode
+  xor eax, eax
+  mov rax, [mode]
+  push rax
+  jmp next
+
+; ( x -- )
+; add x to the word being defined
+native ',', comma
+  mov rax, [here]
+  pop qword [rax]
+  add qword [here], 8
   jmp next
 
 ; ( xt_addr -- xt_addr )
@@ -104,7 +299,6 @@ native 'savenum', savenum
   add  here, word_size
   jmp next
 
-
 ; (  -- answer )
 native 'wasbranch', wasbranch
   xor rdx, rdx
@@ -114,12 +308,9 @@ native 'wasbranch', wasbranch
 
 ; Pushes a value immediately following this XT
 native 'lit', lit
-    push qword [pc]
-    add pc, 8
-    jmp next
-
-
-; COMPILE-ONLY WORDS
+  push qword [pc]
+  add pc, 8
+  jmp next
 
 ; ( answer --  )
 ; Jump to a location if answer is 0
@@ -136,13 +327,13 @@ native 'branchifz', branchifz
 ; (  --  )
 ; Jump to a location
 native 'branch', branch
-    mov pc, [pc]
-    jmp next
+  mov pc, [pc]
+  jmp next
 
 ; Saves PC when the colon word starts
 native 'docol', docol
   sub rstack, 8
-  mov [rstack], pc
+  mov qword [rstack], pc
   add w, 8
   mov pc, w
   jmp next
@@ -153,236 +344,120 @@ native 'exit', exit
   add rstack, 8
   jmp next
 
-; Exits program
-native 'bye', bye
-  mov rax, 60
-  xor rdi, rdi
-  syscall
+; ( flags name --  )
+; Create an entry in the dictionary
+; name is the new name as a null-terminated string
+; only immediate flag is implemented ATM
+native 'create', create
+  ; link
+  mov rcx, [last_word]
+  mov rsi, [here]
+  mov [rsi], rcx
+  mov [last_word], rsi
+  add rsi, 8
+  mov byte [rsi], 0
+  inc rsi
 
-; (  -- buf_addr )
-; Loads the predefined buffer address
-native 'buffer', buffer
-  push qword input_buf
-  jmp next
-
-; ( xt_addr --  )
-native 'initcmd', initcmd
+  ; name
+  pop rdi
+  push rsi
+  call string_copy
+  pop rsi
+  push rsi
+  mov rdi, rsi
+  call string_length
+  pop rsi
+  add rsi, rax
+  ; flags
+  inc rsi
   pop rax
-  push pc
-  mov [program_stub], rax
-  mov pc, program_stub
-  mov w, [pc]
-  pop pc
-  jmp [w]
+  mov [rsi], al
+  inc rsi
 
-native 'warn', warn
-  mov  rdi, warning_message
-  call print_string
-  call print_newline
-  mov  pc, xt_loop
+  mov [here], rsi
   jmp next
 
 ; Initializes registers
 native 'init', init
   mov rstack, rstack_start
-  ; interpreter mode
-  mov pc, xt_run    ; entry_point - other way to work with
-  cmp qword[stack_start], 0
-  je  .init_stack
+  mov stack, stack_start
+  mov qword[mode], 0
+  mov pc, xt_run
+  cmp qword [stack_start], 0
+  je  .first
   mov rsp, [stack_start]
   jmp next
-  .init_stack:
+  .first:
   mov [stack_start], rsp
   jmp next
 
-native 'pushmode', pushmode
-  push mode
+; (  -- buf )
+; load the predefined buffer address
+native 'buffer', buffer
+  push qword input_buf
   jmp next
 
-; GENERAL WORDS
-
-; ( a --  )
-; Drops the topmost element from the stack
-native 'drop', drop
-  add rsp, 8
+native 'comp_m', comp_m
+  mov  rdi, cmode_message
+  call print_string
+  call print_newline
   jmp next
 
-; ( b a -- [ b + a ] )
-native '+', plus
-  pop rax
-  add rax, [rsp]
-  mov [rsp], rax
+native 'inte_m', inte_m
+  mov  rdi, imode_message
+  call print_string
+  call print_newline
   jmp next
-
-; ( a -- a a )
-native 'dup', dup
-  push qword [rsp]
-  jmp next
-
-; ( b a -- [a < b] )
-native '<', less
-  pop rdx
-  pop rax
-  cmp rax, rdx
-  setl al
-  movzx rax, al
-  push rax
-  jmp next
-
-; ( a b -- b a )
-; Swap two cells on top of the stack
-native 'swap', swap
-    pop rax
-    pop rdx
-    push rax
-    push rdx
-    jmp next
-
-; Shows all stack contents. Does not pop elements
-native '.S', show_stack
-  mov rcx, rsp
-  .loop:
-    cmp rcx, [stack_start]
-    jae next
-    mov rdi, [rcx]
-    push rcx
-    call print_int
-    call print_newline
-    pop rcx
-    add rcx, 8
-    jmp .loop
-
-; ( b a -- [ b + a ] )
-native '+', plus
-  pop rdx
-  pop rax
-  add rax, rdx
-  push rax
-  jmp next
-
-; ( b a -- [ b - a ] )
-native '-', minus
-  pop rdx
-  pop rax
-  sub rax, rdx
-  push rax
-  jmp next
-
-; ( b a -- [ b * a ] )
-native '*', mul
-  pop rdx
-  pop rax
-  imul rdx
-  push rax
-  jmp next
-
-; ( y x -- [ x / y ] )
-native '/', div
-  pop rax
-  pop rcx
-  cqo
-  idiv rcx
-  push rax
-  jmp next
-
-; ( b a -- [ b = a ] )
-native '=', equals
-  pop rdx
-  pop rax
-  cmp rax, rdx
-  jne .nequals
-  xor rax, rax
-  mov rax, 1
-  push rax
-  jmp next
-.nequals:
-  xor rax, rax
-  jmp next
-
-; ( b a -- b & a )
-; bitwise and
-native 'and', and
-  pop rdx
-  pop rax
-  and rax, rdx
-  push rax
-  jmp next
-
-; ( a -- !a )
-native 'not', not
-  pop rax
-  test rax, rax
-  jz .setone
-  xor rax, rax
-  push rax
-  jmp next
-  .setone:
-    xor rax, rax
-    mov rax, 1
-    push rax
-    jmp next
-
-; ( a b c -- b c a )
-native 'rot', rot
-  pop rax
-  pop rdx
-  pop rcx
-  push rdx
-  push rcx
-  push rax
-  jmp next
-
-; Drops element from stack and sends it to stdout
-; ( a -- )
-native '.', dot
-  pop rdi
-  call print_int
-  jmp next
-
-; ( -- c )
-; Read a single character
-native 'key', key
-  call read_char
-  push rax
-  jmp next
-
-; ( c -- )
-; Outputs a single character to stdout
-native 'emit', emit
-  pop rdi
-  call print_char
-  jmp next
-
-; ( val addr -- )
-; Store value by address
-native '!', write
-  pop rax
-  pop rdx
-  mov [rax], rdx
-  jmp next
-
-; ( addr -- value )
-; Fetch value from memory
-native '@', fetch
-  pop rax
-  push qword[rax]
-  jmp next
-
-; bitwise or
-; ( y x -- y | x )
-native "or", or
-  pop rax
-  or [rsp], rax
-  jmp next
-
 
 ; ( a -- [ a + a ] )
 colon 'double', double
-  dq xt_dup                 ; The words consisting `dup` start here.
+  dq xt_dup
   dq xt_plus
   dq xt_exit
 
+; ( b a -- [b>a] )
 colon '>', greater
   dq xt_swap
   dq xt_less
-  dq exit
+  dq xt_exit
+
+; Read word from stdin and define it
+colon ':', colon
+  .restart:
+  dq xt_buffer
+  dq xt_read
+  branchif0 .restart
+  dq xt_lit, 0, xt_buffer, xt_create
+  dq xt_lit, 1
+  ;dq xt_state, xt_write
+  dq xt_lit, docol_impl, xt_comma
+  dq xt_exit
+
+colon ';', semicolon, 1
+  dq xt_lit, 0
+  ;dq xt_state
+  dq xt_write
+  dq xt_lit, xt_exit
+  dq xt_comma
+  dq xt_exit
+
+; Read word and place its address on stack
+; ( -- a )
+colon "'", tick, 1
+  dq xt_buffer
+  dq xt_read
+  dq xt_drop
+  dq xt_buffer
+  dq xt_find, xt_dup
+  branchif0 .no_such_word
+  dq xt_cfa
+  ;dq xt_state, xt_fetch
+  branchif0 .interpret
+  dq xt_lit, xt_lit
+  dq xt_comma
+  dq xt_comma
+  .interpret:
+    dq xt_exit
+    .no_such_word:
+      dq xt_warn
+      dq xt_exit
