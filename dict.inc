@@ -258,8 +258,14 @@ native 'pushmode', pushmode
   push rax
   jmp next
 
-; ( x -- )
-; add x to the word being defined
+native 'pushmode_addr', pushmode_addr
+  xor eax, eax
+  mov rax, mode
+  push rax
+  jmp next
+
+; ( a -- )
+; add element from stack to the word
 native ',', comma
   mov rax, [here]
   pop qword [rax]
@@ -267,7 +273,7 @@ native ',', comma
   jmp next
 
 ; ( xt_addr -- xt_addr )
-native 'setbranch', setbranch
+native 'isbranch', isbranch
   pop rax
   push rax
   cmp byte[rax - 1], 2
@@ -286,17 +292,29 @@ native 'unsetbranch', unsetbranch
   jmp next
 
 ; ( xt_addr --  )
-native 'save', save
+native 'saveword', saveword
   pop rax
   mov  qword[here], rax
-  add  here, word_size
+
+  ; add  here, word_size
+  xor eax, eax
+  mov rax, here
+  add rax, word_size
+  add qword[here], rax
+
   jmp next
 
 ; ( xt_addr --  )
 native 'savenum', savenum
   pop rax
-  mov  [here], rax
-  add  here, word_size
+  mov [here], rax
+
+  ; add  here, word_size
+  xor eax, eax
+  mov rax, here
+  add rax, word_size
+  mov qword[here], rax
+
   jmp next
 
 ; (  -- answer )
@@ -313,7 +331,7 @@ native 'lit', lit
   jmp next
 
 ; ( answer --  )
-; Jump to a location if answer is 0
+; jump to a location if answer is 0
 native 'branchifz', branchifz
   pop rax
   test rax, rax
@@ -325,12 +343,12 @@ native 'branchifz', branchifz
     jmp next
 
 ; (  --  )
-; Jump to a location
+; jump to a location
 native 'branch', branch
   mov pc, [pc]
   jmp next
 
-; Saves PC when the colon word starts
+; save PC when the colon word starts
 native 'docol', docol
   sub rstack, 8
   mov qword [rstack], pc
@@ -338,25 +356,28 @@ native 'docol', docol
   mov pc, w
   jmp next
 
-; Returns from the colon word
+; return from the colon word
 native 'exit', exit
   mov pc, [rstack]
   add rstack, 8
   jmp next
 
 ; ( flags name --  )
-; Create an entry in the dictionary
-; name is the new name as a null-terminated string
-; only immediate flag is implemented ATM
+; create an entry in the dictionary
 native 'create', create
   ; link
+
+;  call print_newline
+;  mov rdi, [last_word]
+;  add rdi, link_size
+;  call print_string
+;  call print_newline
+
   mov rcx, [last_word]
   mov rsi, [here]
   mov [rsi], rcx
   mov [last_word], rsi
   add rsi, 8
-  mov byte [rsi], 0
-  inc rsi
 
   ; name
   pop rdi
@@ -369,12 +390,18 @@ native 'create', create
   pop rsi
   add rsi, rax
   ; flags
-  inc rsi
+  inc rsi               ; null-terminator
   pop rax
   mov [rsi], al
   inc rsi
 
   mov [here], rsi
+
+;  mov rdi, [last_word]
+;  add rdi, link_size
+;  call print_string
+;  call print_newline
+
   jmp next
 
 ; Initializes registers
@@ -424,25 +451,32 @@ colon '>', greater
 ; Read word from stdin and define it
 colon ':', colon
   .restart:
-  dq xt_buffer
-  dq xt_read
-  branchif0 .restart
-  dq xt_lit, 0, xt_buffer, xt_create
-  dq xt_lit, 1
-  ;dq xt_state, xt_write
-  dq xt_lit, docol_impl, xt_comma
-  dq xt_exit
+    dq xt_buffer
+    dq xt_read
+    branchif0 .restart
+
+    dq xt_lit, 0          ; interpreter mode flag
+    dq xt_buffer
+    dq xt_create
+
+    dq xt_lit, 1, xt_pushmode_addr
+    dq xt_write
+
+    dq xt_lit, docol_impl
+    dq xt_comma
+
+    dq xt_exit
 
 colon ';', semicolon, 1
-  dq xt_lit, 0
-  ;dq xt_state
+  dq xt_lit, 0, xt_pushmode_addr
   dq xt_write
+
   dq xt_lit, xt_exit
   dq xt_comma
   dq xt_exit
 
-; Read word and place its address on stack
 ; ( -- a )
+; read word and place its address on stack
 colon "'", tick, 1
   dq xt_buffer
   dq xt_read
@@ -451,7 +485,7 @@ colon "'", tick, 1
   dq xt_find, xt_dup
   branchif0 .no_such_word
   dq xt_cfa
-  ;dq xt_state, xt_fetch
+  dq xt_pushmode
   branchif0 .interpret
   dq xt_lit, xt_lit
   dq xt_comma

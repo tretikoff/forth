@@ -22,7 +22,7 @@ print_string:
 	call string_length 				; rax - length
 	pop rsi			 							; rsi - string address
 	mov rdx, rax 							; rdx - length
-	mov rax, 1 								; rax - command number - sys_write(1)
+	mov rax, 1 								; rax - command number - sys_write(
 	mov rdi, 1 								; rdi - file descriptor - stdout(1)
 	syscall										; sys_write rsi rdi rdx rax
 	ret

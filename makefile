@@ -39,6 +39,9 @@ test6: clean forth
 test7: clean forth
 	./forth <tests/test07.frt
 
+test8: clean forth
+	./forth <tests/test08.frt
+
 # build and debug
 bd: clean debug
 

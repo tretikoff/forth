@@ -7,7 +7,7 @@ section .data
   cmode_message: db "Compiler mode", 0
   mode: dq 0               ; 0 - interpreter ; 1 - compiler
   was_branch: db 0
-  mem: dq forth_mem
+  here: dq forth_mem
   stack_start: dq 0
 
 
@@ -28,9 +28,19 @@ find_word:
   mov rsi, [last_word]    ; rsi - pointer to the last word
 
   .loop:
-    push rdi                ; caller-saved
-    push rsi                ; caller-saved
-    add rsi, link_size      ; rsi - jump over the link to word
+
+;    push rdi                ; caller-saved
+;    push rsi                ; caller-saved
+;    add rsi, link_size      ; rsi - jump over the link to word
+;    mov rdi, rsi
+;    call print_string
+;    ;call print_newline
+;    pop rsi
+;    pop rdi
+
+    push rdi
+    push rsi
+    add rsi, link_size
     call string_equals      ; rax - find succeed? true(1) : false(0)
     pop rsi                 ; caller-saved
     pop rdi                 ; caller-saved

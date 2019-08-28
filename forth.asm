@@ -41,12 +41,13 @@ run:
       branch main_loop
 
     .notImmediate:
-      dq xt_setbranch
-      dq xt_save
+      dq xt_isbranch
+      dq xt_comma
       branch main_loop
 
     .compiler_number:
       dq xt_drop
+      dq xt_buffer
       dq xt_parsei
       branchif0 .warning
       dq xt_wasbranch
@@ -58,7 +59,7 @@ run:
 
   	  .lit:
   		dq xt_pushlit
-      dq xt_save
+      dq xt_saveword
   		dq xt_savenum
 
       branch main_loop
