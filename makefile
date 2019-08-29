@@ -42,6 +42,9 @@ test7: clean forth
 test8: clean forth
 	./forth <tests/test08.frt
 
+stdlib: clean forth
+	./forth <libs/stdlib.frt
+
 # build and debug
 bd: clean debug
 

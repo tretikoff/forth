@@ -52,3 +52,20 @@
   dq xt_branch
   dq %1
 %endmacro
+
+%macro rpush 1
+  sub rstack, 8
+  mov qword [rstack], %1
+%endmacro
+
+%macro rpop 1
+  mov %1, qword [rstack]
+  add rstack, 8
+%endmacro
+
+%macro const 2
+%defstr %%__cnst_str %1
+native %%__cnst_str, %1
+    push qword %2
+    jmp next
+%endmacro

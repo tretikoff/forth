@@ -7,6 +7,8 @@ global _start
 
 section .data
   last_word: dq link
+  dp: dq user_mem
+  in_fd: dq 0
 
 section .text
 _start:
@@ -21,6 +23,8 @@ run:
     branchif0 exit           ; word read error or empty string
     dq xt_buffer
     dq xt_find               ; addr or 0
+
+    ; dq xt_printnl
 
     dq xt_pushmode
     branchif0 .interpreter_mode

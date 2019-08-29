@@ -19,6 +19,8 @@ section .bss
   forth_mem: resq 65536
   input_buf: resb 1024
   user_buf: resb 1024
+  user_mem: resq 65536   ; global data for user
+  state: resq 1
 
 section .text
 ; Searches word in dictionary

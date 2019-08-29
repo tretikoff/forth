@@ -134,7 +134,7 @@ native '=', equals
 
 ; ( b a -- [ b & a ] )
 ; bitwise and
-native '&', and
+native 'and', and
   pop rdx
   pop rax
   and rax, rdx
@@ -143,7 +143,7 @@ native '&', and
 
 ; ( b a -- [ b | a ] )
 ; bitwise or
-native '|', or
+native 'or', or
   pop rax
   or [rsp], rax
   jmp next
@@ -200,6 +200,60 @@ native '@', fetch
   pop rax
   push qword[rax]
   jmp next
+
+; ( val addr -- )
+; store value by address
+native 'c!', write_char
+  pop rax
+  pop rdx
+  mov [rax], dl
+  jmp next
+
+; ( addr -- char )
+; read one byte starting at addr
+native 'c@', fetch_char
+  pop rax
+  movzx rax, byte [rax]
+  push rax
+  jmp next
+
+native '>r', to_r
+  pop rax
+  rpush rax
+  jmp next
+
+native 'r>', from_r
+  rpop rax
+  push rax
+  jmp next
+
+native "r@", r_fetch
+  push qword [rstack]
+  jmp next
+
+; logic or
+native 'lor', lor
+  pop rax
+  pop rdx
+  test rax, rax
+  jnz .yes
+  push rdx
+  jmp next
+  .yes:
+    push rax
+    jmp next
+
+; logic and
+native "land", land
+  pop rax
+  pop rdx
+  test rax, rax
+  jz .no
+  push rdx
+  jmp next
+  .no:
+    push rax
+    jmp next
 
 ; ( user_word_addr -- dict_word_addr )
 ; find word in dictionary
@@ -298,6 +352,10 @@ native 'wasbranch', wasbranch
 
 native 'pushlit', pushlit
   push xt_lit
+  jmp next
+
+native 'push_lastword', push_lastword
+  push last_word
   jmp next
 
 ; push a value immediately following this XT
@@ -413,6 +471,12 @@ native 'create', create
   mov [here], rsi
   jmp next
 
+const dp, dp
+const here, [here]
+const in_fd, in_fd
+const state, state
+const mem, user_mem
+
 native 'comp_m', comp_m
   mov  rdi, cmode_message
   call print_string
@@ -424,6 +488,24 @@ native 'inte_m', inte_m
   call print_string
   call print_newline
   jmp next
+
+; ( call_num a1 a2 a3 a4 a5 a6 -- new_rax new_rdx )
+; Executes syscall
+; The following registers store arguments (according to ABI)
+; rdi , rsi , rdx , r10 , r8 and r9
+native "syscall", syscall
+  pop r9
+  pop r8
+  pop r10
+  pop rdx
+  pop rsi
+  pop rdi
+  pop rax
+  syscall
+  push rax
+  push rdx
+  jmp next
+
 
 ; ( a -- [ a + a ] )
 colon 'double', double

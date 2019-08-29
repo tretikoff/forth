@@ -13,11 +13,11 @@ printnl
 10 10 = . printnl
 printnl
 
-7 3 & . printnl
-13 10 & . printnl
+7 3 and . printnl
+13 10 and . printnl
 printnl
 
-9 6 | . printnl
+9 6 or . printnl
 printnl
 
 10 not . printnl
