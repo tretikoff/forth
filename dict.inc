@@ -403,6 +403,14 @@ native 'savenum', savenum
 native 'init', init
   mov rstack, rstack_start
   mov stack, stack_start
+
+  xor eax, eax
+  mov rax, [in_fd]
+  rpush rax
+  xor eax, eax
+  pop rax
+  mov [in_fd], rax
+
   mov qword[mode], 0
   mov pc, xt_run
   cmp qword [stack_start], 0

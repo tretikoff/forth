@@ -12,6 +12,8 @@ section .data
 
 section .text
 _start:
+  xor eax, eax
+  push rax            ; stdin
   jmp init_impl
 
 run:

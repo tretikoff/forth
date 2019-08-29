@@ -128,8 +128,7 @@ here    0 ,
  999 .S
  1 5 testfor
  5 1 testfor
-.S
-
+.S drop printnl
 
 : sys-read-no 0 ;
 : sys-write-no 1 ;
@@ -141,9 +140,7 @@ here    0 ,
 : readc buffer readc@ drop buffer c@ ;
 
 : ( repeat readc 41 - not until ; IMMEDIATE
-
 ( Now we can define comments :)
-
 
 : 2drop drop drop ;
 : 2over >r >r dup r> swap r> swap ;
@@ -152,6 +149,17 @@ here    0 ,
 : endof ' else initcmd ; IMMEDIATE
 : endcase ' drop , dup if repeat ' then initcmd dup not until drop then  ; IMMEDIATE
 
+1 2 .S 2drop .S printnl
+1 2 3 2over .S 2drop 2drop printnl
+: testcase case
+1 of 1 . printnl endof
+2 of 2 . printnl endof
+0 . printnl endcase ;
+1 testcase
+2 testcase
+10 testcase printnl
+
+( NOT WORKING OR JUST NOT TESTED YET )
 
 ( num from to -- 1/0)
 : in-range rot swap over >= -rot <= land ;
