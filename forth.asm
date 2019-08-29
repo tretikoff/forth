@@ -49,6 +49,7 @@ run:
       dq xt_drop
       dq xt_buffer
       dq xt_parsei
+
       branchif0 .warning
       dq xt_wasbranch
       branchif0 .lit
@@ -58,9 +59,10 @@ run:
       branch main_loop
 
   	  .lit:
-  		dq xt_pushlit
-      dq xt_saveword
-  		dq xt_savenum
+  		dq xt_lit, xt_lit
+      dq xt_comma
+      dq xt_comma
+
 
       branch main_loop
 
