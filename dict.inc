@@ -252,12 +252,14 @@ native 'parsei', parsei
   push rdx
   jmp next
 
+; (  -- mode )
 native 'pushmode', pushmode
   xor eax, eax
   mov rax, [mode]
   push rax
   jmp next
 
+; (  -- addr )
 native 'pushmode_addr', pushmode_addr
   xor eax, eax
   mov rax, mode
@@ -282,13 +284,26 @@ native 'isbranch', isbranch
   .continue:
   jmp next
 
+; (  --  )
+native 'unsetbranch', unsetbranch
+  mov byte[was_branch], 0
+  jmp next
+
+; (  -- answer )
+native 'wasbranch', wasbranch
+  xor rdx, rdx
+  mov dl, byte[was_branch]
+  push rdx
+  jmp next
+
 native 'pushlit', pushlit
   push xt_lit
   jmp next
 
-; (  --  )
-native 'unsetbranch', unsetbranch
-  mov byte[was_branch], 0
+; push a value immediately following this XT
+native 'lit', lit
+  push qword [pc]
+  add pc, 8
   jmp next
 
 ; ( xt_addr --  )
@@ -317,17 +332,38 @@ native 'savenum', savenum
 
   jmp next
 
-; (  -- answer )
-native 'wasbranch', wasbranch
-  xor rdx, rdx
-  mov dl, byte[was_branch]
-  push rdx
+; Initializes registers
+native 'init', init
+  mov rstack, rstack_start
+  mov stack, stack_start
+  mov qword[mode], 0
+  mov pc, xt_run
+  cmp qword [stack_start], 0
+  je  .first
+  mov rsp, [stack_start]
+  jmp next
+  .first:
+  mov [stack_start], rsp
   jmp next
 
-; Pushes a value immediately following this XT
-native 'lit', lit
-  push qword [pc]
-  add pc, 8
+; (  -- buf_addr )
+; load the predefined buffer address
+native 'buffer', buffer
+  push qword input_buf
+  jmp next
+
+; save PC when the colon word starts
+native 'docol', docol
+  sub rstack, 8
+  mov qword [rstack], pc
+  add w, 8
+  mov pc, w
+  jmp next
+
+; return from the colon word
+native 'exit', exit
+  mov pc, [rstack]
+  add rstack, 8
   jmp next
 
 ; ( answer --  )
@@ -348,31 +384,10 @@ native 'branch', branch
   mov pc, [pc]
   jmp next
 
-; save PC when the colon word starts
-native 'docol', docol
-  sub rstack, 8
-  mov qword [rstack], pc
-  add w, 8
-  mov pc, w
-  jmp next
-
-; return from the colon word
-native 'exit', exit
-  mov pc, [rstack]
-  add rstack, 8
-  jmp next
-
 ; ( flags name --  )
 ; create an entry in the dictionary
 native 'create', create
   ; link
-
-;  call print_newline
-;  mov rdi, [last_word]
-;  add rdi, link_size
-;  call print_string
-;  call print_newline
-
   mov rcx, [last_word]
   mov rsi, [here]
   mov [rsi], rcx
@@ -396,32 +411,6 @@ native 'create', create
   inc rsi
 
   mov [here], rsi
-
-;  mov rdi, [last_word]
-;  add rdi, link_size
-;  call print_string
-;  call print_newline
-
-  jmp next
-
-; Initializes registers
-native 'init', init
-  mov rstack, rstack_start
-  mov stack, stack_start
-  mov qword[mode], 0
-  mov pc, xt_run
-  cmp qword [stack_start], 0
-  je  .first
-  mov rsp, [stack_start]
-  jmp next
-  .first:
-  mov [stack_start], rsp
-  jmp next
-
-; (  -- buf )
-; load the predefined buffer address
-native 'buffer', buffer
-  push qword input_buf
   jmp next
 
 native 'comp_m', comp_m
@@ -475,8 +464,8 @@ colon ';', semicolon, 1
   dq xt_comma
   dq xt_exit
 
-; ( -- a )
-; read word and place its address on stack
+; ( -- xt_addr )
+; read word and place its xt_address on the stack
 colon "'", tick, 1
   dq xt_buffer
   dq xt_read
