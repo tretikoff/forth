@@ -39,3 +39,45 @@ else drop 0 then ;
 11 prime . printnl
 191 prime . printnl
 201 prime . printnl printnl
+
+
+: for
+      ' swap ,
+      ' >r ,
+      ' >r ,
+here  ' r> ,
+      ' r> ,
+      ' 2dup ,
+      ' >r ,
+      ' >r ,
+      ' < ,
+      ' branchifz ,
+here    0 ,
+       swap ; IMMEDIATE
+
+: endfor
+      ' r> ,
+      ' lit , 1 ,
+        ' + ,
+       ' >r ,
+   ' branch ,
+            ,
+  here swap !
+       ' r> ,
+     ' drop ,
+       ' r> ,
+     ' drop ,
+;  IMMEDIATE
+
+: testfor
+   2dup swap . printnl . printnl printnl
+
+  2dup
+  for
+  r@ . printnl
+  endfor
+;
+
+0 5 testfor
+999 . printnl
+5 0 testfor
