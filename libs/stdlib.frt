@@ -110,6 +110,26 @@ here    0 ,
         ' drop ,
  ;  IMMEDIATE
 
+: testfor
+   2dup swap . printnl . printnl printnl
+
+  2dup
+  for
+  r@ . printnl
+  endfor
+
+  printnl
+  do
+  r@ . printnl
+  loop
+  0 . printnl
+;
+
+ 999 .S
+ 1 5 testfor
+ 5 1 testfor
+.S
+
 
 : sys-read-no 0 ;
 : sys-write-no 1 ;
