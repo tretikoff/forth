@@ -1,2 +1,5 @@
 : .n . printnl ;
-5 6 3 .n .n .n
+: sqr dup * ;
+
+5 .n
+8 sqr .n
