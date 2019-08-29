@@ -132,6 +132,15 @@ native '=', equals
     push rax
     jmp next
 
+; ( b a -- [ b mod a ] )
+native "%", mod
+  pop rcx
+  pop rax
+  cqo
+  idiv rcx
+  push rdx
+  jmp next
+
 ; ( b a -- [ b & a ] )
 ; bitwise and
 native 'and', and
