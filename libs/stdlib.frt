@@ -1,24 +1,27 @@
 : IMMEDIATE push_lastword @ cfa 1 - dup c@ 1 or swap c! ;
 
 : rot >r swap r> swap ;
-1 2 3 rot .S drop drop drop printnl
 : -rot swap >r swap  r> ;
-1 2 3 -rot .S drop drop drop printnl
 : over >r dup r> swap ;
-1 2 over .S drop drop drop printnl
 : 2dup over over ;
-1 2 2dup .S drop drop drop drop printnl
+1 2 3 rot .S printnl -rot .S drop drop drop printnl
+1 2 over .S drop drop drop printnl
+1 2 2dup .S drop drop drop drop printnl printnl
 
 : <> = not ;
 : <= 2dup < -rot = lor ;
 : > <= not ;
 : >= < not ;
-
+5 1 <> . printnl
+8 8 <= . printnl
+5 9 > . printnl
+16 16 >= . printnl printnl
 
 : cell% 8 ;
 : cells cell% * ;
 : KB 1024 * ;
 : MB KB KB  ;
+2 MB . printnl printnl
 
 : allot dp @ swap over + dp ! ;
 
@@ -29,6 +32,11 @@
 : else ' branch , here 0 , swap here swap !  ; IMMEDIATE
 : then here swap ! ; IMMEDIATE
 : endif ' then initcmd ; IMMEDIATE
+
+: abs dup 0 < if -1 * then ;
+5 abs . printnl
+-3 abs . printnl
+-199 abs . printnl printnl
 
 : repeat here ; IMMEDIATE
 : until  ' branchifz , , ; IMMEDIATE
@@ -300,7 +308,7 @@ include recursion.frt
 include runtime-meta.frt
 include managed-string.frt
 
-." Forthress -- a tiny Forth from scratch > (c) Igor Zhirkov 2017-2018 " cr
+." Forth -- a tiny Forth from scratch " printnl
 
 include fib.frt
 
