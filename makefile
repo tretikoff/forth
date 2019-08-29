@@ -45,6 +45,9 @@ test8: clean forth
 stdlib: clean forth
 	./forth <libs/stdlib.frt
 
+mp: clean forthuno
+	./forthuno <mp.frt
+
 # build and debug
 bd: clean debug
 
