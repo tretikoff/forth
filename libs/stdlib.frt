@@ -159,29 +159,19 @@ here    0 ,
 2 testcase
 10 testcase printnl
 
-( NOT WORKING OR JUST NOT TESTED YET )
-
 ( num from to -- 1/0)
 : in-range rot swap over >= -rot <= land ;
+5 -1 5 in-range . printnl
 
 ( 1 if we are compiling )
 : compiling state @ ;
+compiling . printnl
 
 : compnumber compiling if ' lit , , then ;
 
 ( -- input character's code )
 : .' readc compnumber ; IMMEDIATE
-
-0 . printnl
-: readce readc dup .' \ = if
-         readc dup .' n = if
-           drop drop 10
-         else
-           drop drop 0
-         then
-then
-;
-0 . printnl
+.' \ . printnl
 
 : cr 10 emit ;
 : QUOTE 34 ;
